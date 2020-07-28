@@ -1,0 +1,259 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: GenomicsLearningCode
+
+Parameters:
+  ResourcePrefix:
+    Type: String
+    Default: GenomicsLearning
+  ResourcePrefixLowercase:
+    Type: String
+    Default: genomicslearning
+  ResourcesBucket:
+    Type: String
+  DataLakeBucket:
+    Type: String
+
+Resources:
+
+  JobRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - glue.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: s3_access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub arn:aws:s3:::${ResourcesBucket}
+                  - !Sub arn:aws:s3:::${ResourcesBucket}/*
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - s3:DeleteObject
+                Resource:
+                  - !Sub arn:aws:s3:::${DataLakeBucket}
+                  - !Sub arn:aws:s3:::${DataLakeBucket}/*
+
+  RunbookRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - sagemaker.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: logs_access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:DescribeLogStreams
+                  - logs:CreateLogGroup
+                  - logs:PutLogEvents
+                  - logs:GetLogEvents
+                Resource:
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/sagemaker/*
+        - PolicyName: s3_access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:CreateBucket
+                  - s3:ListBucket
+                Resource:
+                  - !Sub arn:aws:s3:::sagemaker-${AWS::Region}-${AWS::AccountId}
+              - Effect: Allow
+                Action:
+                  - iam:GetRole
+                  - sagemaker:DescribeNotebookInstance
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetBucketLocation
+                Resource:
+                  - !Sub arn:aws:s3:::${DataLakeBucket}
+                  - !Sub arn:aws:s3:::${ResourcesBucket}
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - !Sub arn:aws:s3:::${DataLakeBucket}/*
+                  - !Sub arn:aws:s3:::sagemaker-${AWS::Region}-${AWS::AccountId}/*
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource:
+                  - !Sub arn:aws:s3:::${ResourcesBucket}/*
+        - PolicyName: glue_access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:StartJobRun
+                  - glue:StopJobRun
+                Resource:
+                  - !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${ResourcePrefix}*
+        - PolicyName: cfn_access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource:
+                  - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ResourcePrefix}Pipe/*
+                  - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ResourcePrefix}*
+        - PolicyName: sagemaker_access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:CreateServiceLinkedRole
+                Resource:
+                  - !Sub arn:aws:iam::*:role/aws-service-role/sagemaker.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_SageMakerEndpoint
+                Condition:
+                  StringLike:
+                    iam:AWSServiceName: sagemaker.application-autoscaling.amazonaws.com
+              - Effect: Allow
+                Action:
+                  - iam:CreateServiceLinkedRole
+                Resource: '*'
+                Condition:
+                  StringEquals:
+                    iam:AWSServiceName: robomaker.amazonaws.com
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - !Sub arn:aws:iam::*:role/*
+                Condition:
+                  StringEquals:
+                    iam:PassedToService:
+                      - sagemaker.amazonaws.com
+                      - glue.amazonaws.com
+                      - robomaker.amazonaws.com
+                      - states.amazonaws.com
+              - Effect: Allow
+                Action:
+                  - sagemaker:ListEndpoints
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - sagemaker:DescribeTrainingJob
+                  - sagemaker:DescribeTransformJob
+                  - sagemaker:CreateTrainingJob
+                  - sagemaker:CreateAutoMLJob
+                  - sagemaker:CreateTransformJob
+                  - sagemaker:StopTransformJob
+                  - sagemaker:CreateHyperParameterTuningJob
+                  - sagemaker:StopHyperParameterTuningJob
+                  - sagemaker:DescribeHyperParameterTuningJob
+                  - sagemaker:DescribeEndpoint
+                  - sagemaker:DescribeEndpointConfig
+                  - sagemaker:CreateEndpointConfig
+                  - sagemaker:CreateEndpoint
+                  - sagemaker:InvokeEndpoint
+                  - sagemaker:ListTrainingJobsForHyperParameterTuningJob
+                  - sagemaker:CreateModel
+                  - sagemaker:ListTags
+                  - logs:GetLogEvents
+                  - sagemaker:DeleteModel
+                  - sagemaker:StopAutoMLJob
+                  - sagemaker:ListAutoMLJob
+                  - sagemaker:DescribeAutoMLJob
+                Resource:
+                  - !Sub arn:aws:sagemaker:${AWS::Region}:${AWS::AccountId}:training-job*
+                  - !Sub arn:aws:sagemaker:${AWS::Region}:${AWS::AccountId}:automl-job*
+                  - !Sub arn:aws:sagemaker:${AWS::Region}:${AWS::AccountId}:transform-job*
+                  - !Sub arn:aws:sagemaker:${AWS::Region}:${AWS::AccountId}:model*
+                  - !Sub arn:aws:sagemaker:${AWS::Region}:${AWS::AccountId}:endpoint*
+                  - !Sub arn:aws:sagemaker:${AWS::Region}:${AWS::AccountId}:hyper-parameter-tuning-job*
+              - Effect: Allow
+                Action:
+                  - iam:ListRoles
+                Resource: '*'
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: GetRole, DescribeSageMakerRole, ListRoles and CreateServiceLinkedRole require star.
+
+  ProcessClinvarDataJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Command:
+        Name: pythonshell
+        PythonVersion: '3'
+        ScriptLocation: !Sub s3://${ResourcesBucket}/scripts/process_clinvar.py
+      DefaultArguments:
+        --job-bookmark-option: job-bookmark-disable
+        --input_bucket: !Sub ${DataLakeBucket}
+        --clinvar_input_key: !Sub annotation/clinvar/clinvar.vcf.gz
+        --clinvar_annotated_input_key: !Sub annotation/clinvar/clinvar.annotated.vcf.gz
+        --output_bucket: !Sub ${DataLakeBucket}
+        --output_key: !Sub annotation/clinvar/conflicting/clinvar_conflicting.csv
+      MaxCapacity: 1
+      ExecutionProperty:
+        MaxConcurrentRuns: 2
+      MaxRetries: 0
+      Name: !Sub ${ResourcePrefixLowercase}-create-trainingset
+      Role: !Ref JobRole
+
+  RunbookLifecycle:
+    Type: AWS::SageMaker::NotebookInstanceLifecycleConfig
+    Properties:
+      NotebookInstanceLifecycleConfigName: !Sub ${ResourcePrefix}Runbook
+      OnStart:
+      - Content:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            cd /home/ec2-user/SageMaker
+            set -e
+            pip install awscli
+            # download notebooks from S3
+            aws s3 cp s3://${ResourcesBucket}/notebooks/variant_classifier-autopilot.ipynb ./ --acl public-read-write
+            chmod 666 variant_classifier-autopilot.ipynb
+            aws s3 cp s3://${ResourcesBucket}/notebooks/variant_predictor.ipynb ./ --acl public-read-write
+            chmod 666 variant_predictor.ipynb
+            echo "export RESOURCE_PREFIX='${ResourcePrefix}'" > /home/ec2-user/anaconda3/envs/tensorflow_p36/etc/conda/activate.d/env_vars.sh
+
+  Runbook:
+    Type: AWS::SageMaker::NotebookInstance
+    Properties:
+      NotebookInstanceName: !Sub ${ResourcePrefix}Runbook
+      InstanceType: ml.t2.medium
+      LifecycleConfigName: !GetAtt RunbookLifecycle.NotebookInstanceLifecycleConfigName
+      RoleArn: !GetAtt RunbookRole.Arn
