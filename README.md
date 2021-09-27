@@ -138,6 +138,11 @@ https://<bucket-name>.s3-<region>.amazonaws.com/genomics-tertiary-analysis-and-d
 
 Use this link to install the customized solution into your AWS account in a specific region using the [AWS Cloudformation Console](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/template).
 
+---
+
+This solution collects anonymous operational metrics to help AWS improve the
+quality of features of the solution. For more information, including how to disable
+this capability, please see the [implementation guide](https://docs.aws.amazon.com/solutions/latest/genomics-tertiary-analysis-and-machine-learning-using-amazon-sagemaker/appendix-f.html).
 
 ---
 
