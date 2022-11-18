@@ -71,13 +71,6 @@ sed -i '' -e $replace $template_dist_dir/*.template
 mkdir $build_dist_dir/annotation
 mkdir $build_dist_dir/annotation/clinvar/
 
-wget https://aws-batch-genomics-shared.s3.amazonaws.com/human-ngs/learning/annotations/clinvar/clinvar.vcf.gz
-cp clinvar.vcf.gz $build_dist_dir/annotation/clinvar/clinvar.vcf.gz
-wget https://aws-batch-genomics-shared.s3.amazonaws.com/human-ngs/learning/annotations/clinvar/clinvar.annotated.vcf.gz
-cp clinvar.annotated.vcf.gz $build_dist_dir/annotation/clinvar/clinvar.annotated.vcf.gz
-wget https://aws-batch-genomics-shared.s3.amazonaws.com/human-ngs/learning/annotations/clinvar/clinvar_conflicting.csv
-cp clinvar_conflicting.csv $build_dist_dir/annotation/clinvar/clinvar_conflicting.csv
-
 echo "------------------------------------------------------------------------------"
 echo "[Rebuild] Solution"
 echo "------------------------------------------------------------------------------"
