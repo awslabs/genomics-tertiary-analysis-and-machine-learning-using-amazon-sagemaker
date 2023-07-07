@@ -1,3 +1,7 @@
+# Deprecation Notice
+
+This AWS Solution has been archived and is no longer maintained by AWS. A new version of the solution is here: [Guidance for Multi-Omics and Multi-Modal Data Integration and Analysis on AWS](https://aws.amazon.com/solutions/guidance/multi-omics-and-multi-modal-data-integration-and-analysis/). To discover other solutions, please visit the [AWS Solutions Library](https://aws.amazon.com/solutions/).
+
 # Genomics Tertiary Analysis and Machine Learning Using Amazon SageMaker
 
 <img src="https://d1.awsstatic.com/Solutions/Solutions%20Category%20Template%20Draft/Solution%20Architecture%20Diagrams/genomics-tertiary-analysis-and-machine-learning-architecture-diagram.102c69721d29289d37ac46615dc602034e69bcc0.png" style="width:75vw">
